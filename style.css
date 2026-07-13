@@ -1,0 +1,87 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #0a0e14;
+  color: #edf3fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100svh;
+  background:
+    radial-gradient(circle at 50% calc(50% - 5rem), rgba(55, 116, 164, 0.14), transparent 18rem),
+    #0a0e14;
+}
+
+#stage {
+  display: flex;
+  min-height: 100vh;
+  min-height: 100svh;
+  width: 100%;
+  padding: clamp(1.5rem, 5vw, 4rem);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+#sentinel-eye {
+  display: grid;
+  width: clamp(10rem, 24vw, 12.5rem);
+  aspect-ratio: 1;
+  margin-bottom: clamp(1.75rem, 4vh, 2.75rem);
+  place-items: center;
+}
+
+#sentinel-eye > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+h1 {
+  margin: 0;
+  color: #edf3fb;
+  font-size: clamp(2rem, 6vw, 3.75rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: clamp(0.28em, 1.2vw, 0.48em);
+  text-indent: clamp(0.28em, 1.2vw, 0.48em);
+}
+
+.tagline {
+  margin: 0.9rem 0 0;
+  color: #7f8c9d;
+  font-size: clamp(0.8rem, 2vw, 0.95rem);
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 30rem) {
+  body {
+    background:
+      radial-gradient(circle at 50% calc(50% - 4rem), rgba(55, 116, 164, 0.14), transparent 13rem),
+      #0a0e14;
+  }
+
+  #sentinel-eye {
+    width: min(10rem, 50vw);
+    margin-bottom: 1.5rem;
+  }
+
+  h1 {
+    font-size: clamp(1.75rem, 10vw, 2.4rem);
+    letter-spacing: 0.24em;
+    text-indent: 0.24em;
+  }
+}
