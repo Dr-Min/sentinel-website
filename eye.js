@@ -19,8 +19,8 @@
     return element;
   }
 
-  function initializeEye() {
-    const host = document.getElementById("sentinel-eye");
+  function initializeEye(hostId, clipId) {
+    const host = document.getElementById(hostId);
 
     if (!host || host.dataset.eyeInitialized === "true") {
       return;
@@ -41,7 +41,7 @@
     svg.style.overflow = "visible";
 
     const defs = makeSvgElement("defs");
-    const clipPath = makeSvgElement("clipPath", { id: "sentinel-eye-clip" });
+    const clipPath = makeSvgElement("clipPath", { id: clipId });
     clipPath.append(
       makeSvgElement("path", {
         d: "M10 70 C34 20 75 12 100 12 C125 12 166 20 190 70 C166 120 125 128 100 128 C75 128 34 120 10 70 Z",
@@ -60,7 +60,7 @@
     });
 
     const clippedContents = makeSvgElement("g", {
-      "clip-path": "url(#sentinel-eye-clip)",
+      "clip-path": `url(#${clipId})`,
     });
     const gaze = makeSvgElement("g");
     const iris = makeSvgElement("circle", {
@@ -186,9 +186,45 @@
     requestAnimationFrame(animate);
   }
 
+  function initializeNavigation() {
+    const nav = document.getElementById("top-nav");
+    const hero = document.getElementById("hero");
+
+    if (!nav || !hero) {
+      return;
+    }
+
+    let updateRequested = false;
+
+    function updateNavigation() {
+      const revealAt = hero.offsetTop + hero.offsetHeight * 0.7;
+      nav.classList.toggle("nav-visible", window.scrollY >= revealAt);
+      updateRequested = false;
+    }
+
+    function requestNavigationUpdate() {
+      if (updateRequested) {
+        return;
+      }
+
+      updateRequested = true;
+      requestAnimationFrame(updateNavigation);
+    }
+
+    window.addEventListener("scroll", requestNavigationUpdate, { passive: true });
+    window.addEventListener("resize", requestNavigationUpdate, { passive: true });
+    updateNavigation();
+  }
+
+  function initialize() {
+    initializeEye("sentinel-eye", "sentinel-eye-clip");
+    initializeEye("nav-eye", "nav-eye-clip");
+    initializeNavigation();
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initializeEye, { once: true });
+    document.addEventListener("DOMContentLoaded", initialize, { once: true });
   } else {
-    initializeEye();
+    initialize();
   }
 })();
