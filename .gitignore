@@ -1,0 +1,4 @@
+# Private company materials — never publish
+[SENTINEL]*.pdf
+*.pdf
+content-brief.md
