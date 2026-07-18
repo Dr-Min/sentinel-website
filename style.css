@@ -45,19 +45,29 @@ body {
   width: clamp(20rem, 42vw, 30rem);
   aspect-ratio: 401 / 250;
   margin-bottom: clamp(1.75rem, 4vh, 2.75rem);
+  perspective: 900px;
 }
 
-#sentinel-eye .logo-emblem,
-#sentinel-eye .logo-band {
-  position: absolute;
-  inset: 0;
+#sentinel-eye .hero-logo {
   display: block;
   width: 100%;
   height: 100%;
+  will-change: transform;
+  transform-style: flat;
 }
 
-#sentinel-eye .logo-band {
-  z-index: 1;
+#sentinel-eye::after {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    rgba(232, 200, 74, 0.2),
+    rgba(232, 200, 74, 0) 55%
+  );
+  opacity: var(--glow-o, 0);
+  transition: opacity 0.8s ease;
 }
 
 h1 {

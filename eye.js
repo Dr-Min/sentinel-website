@@ -1,40 +1,36 @@
 (() => {
   "use strict";
 
-  const POINTER_RANGE = 180;
   const IDLE_AFTER_MS = 4500;
+  const MAX_YAW_DEG = 14;
+  const MAX_PITCH_DEG = 11;
+  const MAX_SHIFT_PX = 8;
+  const ACTIVE_SCALE = 1.015;
+  const GLOW_TRAVEL_PCT = 30;
 
-  function initializeEmblem() {
+  function initializeGaze() {
     const host = document.getElementById("sentinel-eye");
-    const emblem = host?.querySelector(".logo-emblem");
+    const logo = host?.querySelector(".hero-logo");
 
-    if (!host || !emblem) {
+    if (!host || !logo) {
       return;
     }
 
     const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const current = { x: 0, y: 0 };
-    const target = { x: 0, y: 0 };
-    const maxTravel = { x: 0, y: 0 };
-    let lastPointerTime = performance.now();
+    const current = { yaw: 0, pitch: 0, scale: 1 };
+    const target = { yaw: 0, pitch: 0, scale: 1 };
+    let lastPointerTime = 0;
     let previousFrameTime = performance.now();
 
-    function updateTravelLimits() {
-      const renderedWidth = emblem.getBoundingClientRect().width;
-      maxTravel.x = renderedWidth * 0.03;
-      maxTravel.y = renderedWidth * 0.022;
-      current.x = Math.max(-maxTravel.x, Math.min(current.x, maxTravel.x));
-      current.y = Math.max(-maxTravel.y, Math.min(current.y, maxTravel.y));
-      target.x = Math.max(-maxTravel.x, Math.min(target.x, maxTravel.x));
-      target.y = Math.max(-maxTravel.y, Math.min(target.y, maxTravel.y));
-    }
-
-    function resetPosition() {
-      current.x = 0;
-      current.y = 0;
-      target.x = 0;
-      target.y = 0;
-      emblem.style.transform = "translate(0px, 0px)";
+    function resetPose() {
+      current.yaw = 0;
+      current.pitch = 0;
+      current.scale = 1;
+      target.yaw = 0;
+      target.pitch = 0;
+      target.scale = 1;
+      logo.style.transform = "none";
+      host.style.setProperty("--glow-o", "0");
     }
 
     function updatePointerTarget(event) {
@@ -52,23 +48,41 @@
 
       const dx = event.clientX - (bounds.left + bounds.width / 2);
       const dy = event.clientY - (bounds.top + bounds.height / 2);
-      const distance = Math.hypot(dx, dy);
-      const strength = Math.min(distance / POINTER_RANGE, 1);
-      const angle = Math.atan2(dy, dx);
+      const normX = Math.max(-1, Math.min(dx / (window.innerWidth * 0.45), 1));
+      const normY = Math.max(-1, Math.min(dy / (window.innerHeight * 0.45), 1));
 
-      target.x = Math.cos(angle) * maxTravel.x * strength;
-      target.y = Math.sin(angle) * maxTravel.y * strength;
+      target.yaw = normX * MAX_YAW_DEG;
+      target.pitch = -normY * MAX_PITCH_DEG;
+      target.scale = ACTIVE_SCALE;
       lastPointerTime = performance.now();
     }
 
     function updateIdleTarget(now) {
-      if (now - lastPointerTime < IDLE_AFTER_MS) {
+      if (lastPointerTime && now - lastPointerTime < IDLE_AFTER_MS) {
         return;
       }
 
       const seconds = now / 1000;
-      target.x = Math.sin(seconds * 0.42) * maxTravel.x * 0.55;
-      target.y = Math.sin(seconds * 0.67 + 1.4) * maxTravel.y * 0.5;
+      target.yaw = Math.sin(seconds * 0.35) * (MAX_YAW_DEG * 0.35);
+      target.pitch = Math.sin(seconds * 0.52 + 1.2) * (MAX_PITCH_DEG * 0.3);
+      target.scale = 1;
+    }
+
+    function applyPose() {
+      const shiftX = (current.yaw / MAX_YAW_DEG) * MAX_SHIFT_PX;
+      const shiftY = (-current.pitch / MAX_PITCH_DEG) * MAX_SHIFT_PX * 0.75;
+
+      logo.style.transform =
+        `translate(${shiftX.toFixed(2)}px, ${shiftY.toFixed(2)}px) ` +
+        `rotateY(${current.yaw.toFixed(2)}deg) ` +
+        `rotateX(${current.pitch.toFixed(2)}deg) ` +
+        `scale(${current.scale.toFixed(3)})`;
+
+      const glowX = 50 + (current.yaw / MAX_YAW_DEG) * GLOW_TRAVEL_PCT;
+      const glowY = 50 - (current.pitch / MAX_PITCH_DEG) * GLOW_TRAVEL_PCT;
+      host.style.setProperty("--glow-x", `${glowX.toFixed(1)}%`);
+      host.style.setProperty("--glow-y", `${glowY.toFixed(1)}%`);
+      host.style.setProperty("--glow-o", "1");
     }
 
     function animate(now) {
@@ -76,31 +90,21 @@
       previousFrameTime = now;
 
       if (reducedMotionQuery.matches) {
-        resetPosition();
+        resetPose();
       } else {
         updateIdleTarget(now);
         const easing = 1 - Math.pow(0.88, delta);
-        current.x += (target.x - current.x) * easing;
-        current.y += (target.y - current.y) * easing;
-        emblem.style.transform = `translate(${current.x.toFixed(2)}px, ${current.y.toFixed(2)}px)`;
+        current.yaw += (target.yaw - current.yaw) * easing;
+        current.pitch += (target.pitch - current.pitch) * easing;
+        current.scale += (target.scale - current.scale) * easing;
+        applyPose();
       }
 
       requestAnimationFrame(animate);
     }
 
-    function handleMotionPreferenceChange() {
-      resetPosition();
-      lastPointerTime = performance.now();
-      previousFrameTime = performance.now();
-    }
-
-    updateTravelLimits();
     window.addEventListener("pointermove", updatePointerTarget, { passive: true });
-    window.addEventListener("resize", updateTravelLimits, { passive: true });
-    if (!emblem.complete) {
-      emblem.addEventListener("load", updateTravelLimits, { once: true });
-    }
-    reducedMotionQuery.addEventListener("change", handleMotionPreferenceChange);
+    reducedMotionQuery.addEventListener("change", resetPose);
     requestAnimationFrame(animate);
   }
 
@@ -135,7 +139,7 @@
   }
 
   function initialize() {
-    initializeEmblem();
+    initializeGaze();
     initializeNavigation();
   }
 
