@@ -41,17 +41,23 @@ body {
 }
 
 #sentinel-eye {
-  display: grid;
-  width: clamp(10rem, 24vw, 12.5rem);
-  aspect-ratio: 1;
+  position: relative;
+  width: clamp(20rem, 42vw, 30rem);
+  aspect-ratio: 401 / 250;
   margin-bottom: clamp(1.75rem, 4vh, 2.75rem);
-  place-items: center;
 }
 
-#sentinel-eye > svg {
+#sentinel-eye .logo-emblem,
+#sentinel-eye .logo-band {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
+}
+
+#sentinel-eye .logo-band {
+  z-index: 1;
 }
 
 h1 {
@@ -62,6 +68,19 @@ h1 {
   line-height: 1;
   letter-spacing: clamp(0.28em, 1.2vw, 0.48em);
   text-indent: clamp(0.28em, 1.2vw, 0.48em);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
 }
 
 .tagline {
@@ -77,11 +96,6 @@ h1 {
     background:
       radial-gradient(circle at 50% calc(50% - 4rem), rgba(204, 161, 1, 0.1), transparent 15rem),
       var(--bg);
-  }
-
-  #sentinel-eye {
-    width: min(10rem, 50vw);
-    margin-bottom: 1.5rem;
   }
 
   h1 {
@@ -135,28 +149,17 @@ a {
   transform: translateY(0);
 }
 
-#nav-eye {
-  display: grid;
-  width: 2.125rem;
-  height: 2.125rem;
-  flex: 0 0 2.125rem;
-  place-items: center;
+a.nav-brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  text-decoration: none;
 }
 
-#nav-eye > svg {
+a.nav-brand img.nav-logo {
   display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.nav-wordmark {
-  margin-left: 0.7rem;
-  color: var(--gold);
-  font-family: "Didot", "Bodoni 72", "Times New Roman", serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.28em;
-  text-shadow: 0 0 1rem rgba(204, 161, 1, 0.16);
+  width: auto;
+  height: 2.5rem;
 }
 
 .nav-links {
@@ -217,52 +220,8 @@ a {
 }
 
 #hero #sentinel-eye {
-  width: clamp(15rem, min(50vw, 50svh), 31rem);
   margin: 0;
   grid-area: mark;
-}
-
-#hero h1 {
-  position: absolute;
-  z-index: 1;
-  display: flex;
-  width: min(94vw, 58rem);
-  margin: 0;
-  align-items: center;
-  align-self: center;
-  grid-area: mark;
-  gap: clamp(0.75rem, 2.2vw, 1.75rem);
-  color: var(--gold);
-  background: linear-gradient(
-    to bottom,
-    transparent 22%,
-    var(--bg) 22%,
-    var(--bg) 78%,
-    transparent 78%
-  );
-  font-family: "Didot", "Bodoni 72", "Times New Roman", serif;
-  font-size: clamp(2.25rem, 6vw, 4.5rem);
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: clamp(0.2em, 1.2vw, 0.38em);
-  text-indent: clamp(0.2em, 1.2vw, 0.38em);
-  text-shadow:
-    0 0 0.85rem rgba(10, 14, 20, 0.95),
-    0 0 1.5rem rgba(204, 161, 1, 0.2);
-  white-space: nowrap;
-  justify-self: center;
-}
-
-#hero h1::before,
-#hero h1::after {
-  height: 1px;
-  flex: 1 1 auto;
-  background: linear-gradient(to right, transparent, var(--gold-dim), var(--gold));
-  content: "";
-}
-
-#hero h1::after {
-  background: linear-gradient(to right, var(--gold), var(--gold-dim), transparent);
 }
 
 #hero .tagline {
@@ -599,18 +558,6 @@ footer {
   #top-nav {
     min-height: 4rem;
     padding: 0.65rem 1rem;
-  }
-
-  #nav-eye {
-    width: 1.9rem;
-    height: 1.9rem;
-    flex-basis: 1.9rem;
-  }
-
-  .nav-wordmark {
-    margin-left: 0.5rem;
-    font-size: 0.68rem;
-    letter-spacing: 0.18em;
   }
 
   .nav-links {

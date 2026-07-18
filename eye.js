@@ -1,104 +1,40 @@
 (() => {
   "use strict";
 
-  const SVG_NS = "http://www.w3.org/2000/svg";
-  const VIEWBOX_SIZE = 200;
-  const MARK_CENTER = { x: 100, y: 100 };
-  const INNER_RADIUS = 46;
-  const PUPIL_RADIUS = INNER_RADIUS * 0.07;
-  const MAX_TRAVEL = 31;
   const POINTER_RANGE = 180;
   const IDLE_AFTER_MS = 4500;
-  const GOLD = "#cca101";
 
-  function makeSvgElement(tagName, attributes = {}) {
-    const element = document.createElementNS(SVG_NS, tagName);
+  function initializeEmblem() {
+    const host = document.getElementById("sentinel-eye");
+    const emblem = host?.querySelector(".logo-emblem");
 
-    Object.entries(attributes).forEach(([name, value]) => {
-      element.setAttribute(name, String(value));
-    });
-
-    return element;
-  }
-
-  function randomBetween(min, max) {
-    return min + Math.random() * (max - min);
-  }
-
-  function initializeEye(hostId) {
-    const host = document.getElementById(hostId);
-
-    if (!host || host.dataset.eyeInitialized === "true") {
+    if (!host || !emblem) {
       return;
     }
-
-    host.dataset.eyeInitialized = "true";
-
-    const svg = makeSvgElement("svg", {
-      viewBox: `0 0 ${VIEWBOX_SIZE} ${VIEWBOX_SIZE}`,
-      role: "presentation",
-      "aria-hidden": "true",
-      focusable: "false",
-      preserveAspectRatio: "xMidYMid meet",
-    });
-    svg.style.display = "block";
-    svg.style.width = "100%";
-    svg.style.height = "100%";
-    svg.style.overflow = "visible";
-
-    const aperture = makeSvgElement("g", {
-      fill: "none",
-      stroke: GOLD,
-    });
-    const outerRing = makeSvgElement("circle", {
-      cx: MARK_CENTER.x,
-      cy: MARK_CENTER.y,
-      r: 92,
-      stroke: GOLD,
-      "stroke-width": "1.5",
-      opacity: "0.58",
-    });
-    const mainRing = makeSvgElement("circle", {
-      cx: MARK_CENTER.x,
-      cy: MARK_CENTER.y,
-      r: 79,
-      stroke: GOLD,
-      "stroke-width": "7",
-    });
-    const innerRing = makeSvgElement("circle", {
-      cx: MARK_CENTER.x,
-      cy: MARK_CENTER.y,
-      r: INNER_RADIUS,
-      stroke: GOLD,
-      "stroke-width": "2.5",
-      opacity: "0.9",
-    });
-    const gaze = makeSvgElement("g");
-    const pupil = makeSvgElement("circle", {
-      cx: MARK_CENTER.x,
-      cy: MARK_CENTER.y,
-      r: PUPIL_RADIUS.toFixed(2),
-      fill: GOLD,
-    });
-
-    aperture.append(outerRing, mainRing, innerRing);
-    gaze.append(pupil);
-    svg.append(aperture, gaze);
-    host.replaceChildren(svg);
 
     const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const current = { x: 0, y: 0 };
     const target = { x: 0, y: 0 };
-    let lastPointerTime = 0;
-    let pulseStart = 0;
-    let nextPulseAt = performance.now() + randomBetween(4000, 7000);
+    const maxTravel = { x: 0, y: 0 };
+    let lastPointerTime = performance.now();
     let previousFrameTime = performance.now();
 
-    function resetFocusPulse(now) {
-      pulseStart = 0;
-      nextPulseAt = now + randomBetween(4000, 7000);
-      innerRing.setAttribute("r", INNER_RADIUS);
-      innerRing.setAttribute("opacity", "0.9");
+    function updateTravelLimits() {
+      const renderedWidth = emblem.getBoundingClientRect().width;
+      maxTravel.x = renderedWidth * 0.03;
+      maxTravel.y = renderedWidth * 0.022;
+      current.x = Math.max(-maxTravel.x, Math.min(current.x, maxTravel.x));
+      current.y = Math.max(-maxTravel.y, Math.min(current.y, maxTravel.y));
+      target.x = Math.max(-maxTravel.x, Math.min(target.x, maxTravel.x));
+      target.y = Math.max(-maxTravel.y, Math.min(target.y, maxTravel.y));
+    }
+
+    function resetPosition() {
+      current.x = 0;
+      current.y = 0;
+      target.x = 0;
+      target.y = 0;
+      emblem.style.transform = "translate(0px, 0px)";
     }
 
     function updatePointerTarget(event) {
@@ -109,7 +45,7 @@
         return;
       }
 
-      const bounds = svg.getBoundingClientRect();
+      const bounds = host.getBoundingClientRect();
       if (!bounds.width || !bounds.height) {
         return;
       }
@@ -120,74 +56,51 @@
       const strength = Math.min(distance / POINTER_RANGE, 1);
       const angle = Math.atan2(dy, dx);
 
-      target.x = Math.cos(angle) * MAX_TRAVEL * strength;
-      target.y = Math.sin(angle) * MAX_TRAVEL * strength;
+      target.x = Math.cos(angle) * maxTravel.x * strength;
+      target.y = Math.sin(angle) * maxTravel.y * strength;
       lastPointerTime = performance.now();
     }
 
     function updateIdleTarget(now) {
-      if (reducedMotionQuery.matches) {
-        target.x = 0;
-        target.y = 0;
-        return;
-      }
-
-      if (lastPointerTime && now - lastPointerTime < IDLE_AFTER_MS) {
+      if (now - lastPointerTime < IDLE_AFTER_MS) {
         return;
       }
 
       const seconds = now / 1000;
-      target.x = Math.sin(seconds * 0.42) * MAX_TRAVEL * 0.55;
-      target.y = Math.sin(seconds * 0.67 + 1.4) * MAX_TRAVEL * 0.5;
-    }
-
-    function updateFocusPulse(now) {
-      if (reducedMotionQuery.matches) {
-        if (pulseStart) {
-          resetFocusPulse(now);
-        }
-        return;
-      }
-
-      if (!pulseStart && now >= nextPulseAt) {
-        pulseStart = now;
-      }
-
-      if (!pulseStart) {
-        return;
-      }
-
-      const progress = Math.min((now - pulseStart) / 250, 1);
-      const focus = Math.sin(progress * Math.PI);
-      innerRing.setAttribute("r", (INNER_RADIUS - focus * 2.5).toFixed(2));
-      innerRing.setAttribute("opacity", (0.9 + focus * 0.1).toFixed(2));
-
-      if (progress === 1) {
-        resetFocusPulse(now);
-      }
+      target.x = Math.sin(seconds * 0.42) * maxTravel.x * 0.55;
+      target.y = Math.sin(seconds * 0.67 + 1.4) * maxTravel.y * 0.5;
     }
 
     function animate(now) {
       const delta = Math.min((now - previousFrameTime) / 16.67, 4);
       previousFrameTime = now;
 
-      updateIdleTarget(now);
-
       if (reducedMotionQuery.matches) {
-        current.x = 0;
-        current.y = 0;
+        resetPosition();
       } else {
+        updateIdleTarget(now);
         const easing = 1 - Math.pow(0.88, delta);
         current.x += (target.x - current.x) * easing;
         current.y += (target.y - current.y) * easing;
+        emblem.style.transform = `translate(${current.x.toFixed(2)}px, ${current.y.toFixed(2)}px)`;
       }
 
-      gaze.setAttribute("transform", `translate(${current.x.toFixed(2)} ${current.y.toFixed(2)})`);
-      updateFocusPulse(now);
       requestAnimationFrame(animate);
     }
 
+    function handleMotionPreferenceChange() {
+      resetPosition();
+      lastPointerTime = performance.now();
+      previousFrameTime = performance.now();
+    }
+
+    updateTravelLimits();
     window.addEventListener("pointermove", updatePointerTarget, { passive: true });
+    window.addEventListener("resize", updateTravelLimits, { passive: true });
+    if (!emblem.complete) {
+      emblem.addEventListener("load", updateTravelLimits, { once: true });
+    }
+    reducedMotionQuery.addEventListener("change", handleMotionPreferenceChange);
     requestAnimationFrame(animate);
   }
 
@@ -222,8 +135,7 @@
   }
 
   function initialize() {
-    initializeEye("sentinel-eye");
-    initializeEye("nav-eye");
+    initializeEmblem();
     initializeNavigation();
   }
 
