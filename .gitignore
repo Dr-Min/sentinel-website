@@ -2,3 +2,5 @@
 [SENTINEL]*.pdf
 *.pdf
 content-brief.md
+*.jpg
+*.jpeg
