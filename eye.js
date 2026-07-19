@@ -6,7 +6,7 @@
   const MAX_PITCH_DEG = 11;
   const MAX_SHIFT_PX = 8;
   const ACTIVE_SCALE = 1.015;
-  const GLOW_TRAVEL_PCT = 30;
+  const GLOW_TRAVEL_PCT = 16;
 
   function initializeGaze() {
     const host = document.getElementById("sentinel-eye");

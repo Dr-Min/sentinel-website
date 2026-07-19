@@ -59,12 +59,12 @@ body {
 #sentinel-eye::after {
   content: "";
   position: absolute;
-  inset: -12%;
+  inset: -85% -70%;
   pointer-events: none;
   background: radial-gradient(
     circle at var(--glow-x, 50%) var(--glow-y, 50%),
-    rgba(232, 200, 74, 0.2),
-    rgba(232, 200, 74, 0) 55%
+    rgba(232, 200, 74, 0.16),
+    rgba(232, 200, 74, 0) 38%
   );
   opacity: var(--glow-o, 0);
   transition: opacity 0.8s ease;
