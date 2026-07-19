@@ -13,13 +13,20 @@
   const canvas = document.querySelector('.film__canvas');
   const loader = document.querySelector('.loader');
   const loaderBar = document.querySelector('.loader__bar');
+  const landing = document.querySelector('.landing');
   const lines = Array.from(document.querySelectorAll('.film__line'));
   const context = canvas ? canvas.getContext('2d', { alpha: false }) : null;
 
-  if (!film || !canvas || !loader || !loaderBar || !context) {
+  if (!film || !canvas || !loader || !loaderBar || !landing || !context) {
     root.classList.add('motion-fallback');
     return;
   }
+
+  const EMBLEM = {
+    centerX: 0.501,
+    centerY: 0.438,
+    width: 0.349,
+  };
 
   const state = {
     manifest: null,
@@ -36,6 +43,38 @@
 
   const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
   const smoothstep = (value) => value * value * (3 - 2 * value);
+  const phase = (value, start, end) => smoothstep(clamp((value - start) / (end - start), 0, 1));
+
+  function coverFit(viewWidth, viewHeight) {
+    const sourceWidth = state.manifest.width;
+    const sourceHeight = state.manifest.height;
+    const scale = Math.max(viewWidth / sourceWidth, viewHeight / sourceHeight);
+    const width = sourceWidth * scale;
+    const height = sourceHeight * scale;
+
+    return {
+      scale,
+      width,
+      height,
+      x: (viewWidth - width) / 2,
+      y: (viewHeight - height) / 2,
+    };
+  }
+
+  // Public by design: landing elements and the canvas share this exact cover-fit map.
+  function frameSpaceToViewport(xPercent, yPercent) {
+    if (!state.manifest) return null;
+
+    const rect = canvas.getBoundingClientRect();
+    const fit = coverFit(rect.width, rect.height);
+    return {
+      x: rect.left + fit.x + state.manifest.width * (xPercent / 100) * fit.scale,
+      y: rect.top + fit.y + state.manifest.height * (yPercent / 100) * fit.scale,
+      scale: fit.scale,
+    };
+  }
+
+  window.frameSpaceToViewport = frameSpaceToViewport;
 
   function formatFramePath(index) {
     const frameNumber = String(index + 1).padStart(4, '0');
@@ -44,9 +83,7 @@
   }
 
   function loadFrame(index) {
-    if (state.frames[index]) {
-      return state.frames[index].promise;
-    }
+    if (state.frames[index]) return state.frames[index].promise;
 
     const image = new Image();
     image.decoding = 'async';
@@ -80,12 +117,29 @@
     return -1;
   }
 
+  function updateLandingGeometry() {
+    if (!state.manifest) return;
+
+    const center = frameSpaceToViewport(EMBLEM.centerX * 100, EMBLEM.centerY * 100);
+    if (!center) return;
+
+    const emblemWidth = state.manifest.width * EMBLEM.width * center.scale;
+    landing.style.setProperty('--emblem-center-x', `${center.x.toFixed(2)}px`);
+    landing.style.setProperty('--emblem-center-y', `${center.y.toFixed(2)}px`);
+    landing.style.setProperty('--emblem-width', `${emblemWidth.toFixed(2)}px`);
+    landing.style.setProperty('--band-width', `${(emblemWidth * 1.15).toFixed(2)}px`);
+    landing.style.setProperty('--band-height', `${(emblemWidth * 0.235).toFixed(2)}px`);
+    landing.style.setProperty('--wordmark-size', `${(emblemWidth * 0.18).toFixed(2)}px`);
+    landing.style.setProperty('--landing-below', `${(center.y + emblemWidth * 0.535).toFixed(2)}px`);
+  }
+
   function resizeCanvas() {
     const rect = canvas.getBoundingClientRect();
     const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
     const width = Math.max(1, Math.round(rect.width * pixelRatio));
     const height = Math.max(1, Math.round(rect.height * pixelRatio));
 
+    updateLandingGeometry();
     if (canvas.width === width && canvas.height === height) return;
 
     canvas.width = width;
@@ -102,41 +156,48 @@
     if (frameIndex < 0) return;
 
     const image = state.frames[frameIndex].image;
-    const sourceWidth = state.manifest.width || image.naturalWidth;
-    const sourceHeight = state.manifest.height || image.naturalHeight;
-    const scale = Math.max(state.displayWidth / sourceWidth, state.displayHeight / sourceHeight);
-    const drawWidth = sourceWidth * scale;
-    const drawHeight = sourceHeight * scale;
-    const x = (state.displayWidth - drawWidth) / 2;
-    const y = (state.displayHeight - drawHeight) / 2;
-
-    context.drawImage(image, x, y, drawWidth, drawHeight);
+    const fit = coverFit(state.displayWidth, state.displayHeight);
+    context.drawImage(image, fit.x, fit.y, fit.width, fit.height);
     state.drawnFrame = frameIndex;
     state.canvasDirty = false;
     root.classList.add('canvas-ready');
   }
 
-  function overlayOpacity(progress, start, end, stays) {
-    if (progress < start || (!stays && progress > end)) return 0;
+  function overlayOpacity(progress, start, end) {
+    if (progress < start || progress > end) return 0;
 
     const span = end - start;
-    const fadeSpan = Math.min(0.055, span * 0.32);
-    const fadeIn = smoothstep(clamp((progress - start) / fadeSpan, 0, 1));
-    if (stays) return fadeIn;
-
-    const fadeOut = smoothstep(clamp((end - progress) / fadeSpan, 0, 1));
+    const fadeSpan = Math.min(0.05, span * 0.3);
+    const fadeIn = phase(progress, start, start + fadeSpan);
+    const fadeOut = 1 - phase(progress, end - fadeSpan, end);
     return Math.min(fadeIn, fadeOut);
   }
 
   function updateOverlays() {
     lines.forEach((line) => {
-      const start = Number(line.dataset.start);
-      const end = Number(line.dataset.end);
-      const opacity = overlayOpacity(state.progress, start, end, line.dataset.stay === 'true');
+      const opacity = overlayOpacity(
+        state.progress,
+        Number(line.dataset.start),
+        Number(line.dataset.end),
+      );
       line.style.opacity = opacity.toFixed(3);
       line.style.transform = `translate3d(0, ${(1 - opacity) * 18}px, 0)`;
     });
 
+    const reveal = phase(state.progress, 0.96, 1);
+    const wordmarkReveal = phase(reveal, 0, 0.52);
+    const taglineReveal = phase(reveal, 0.22, 0.76);
+    const ctaReveal = phase(reveal, 0.48, 1);
+    const tracking = 0.115 + (1 - wordmarkReveal) * 0.22;
+
+    landing.style.setProperty('--wordmark-opacity', wordmarkReveal.toFixed(3));
+    landing.style.setProperty('--wordmark-tracking', `${tracking.toFixed(3)}em`);
+    landing.style.setProperty('--tagline-opacity', taglineReveal.toFixed(3));
+    landing.style.setProperty('--tagline-offset', `${((1 - taglineReveal) * 12).toFixed(2)}px`);
+    landing.style.setProperty('--cta-opacity', ctaReveal.toFixed(3));
+    landing.style.setProperty('--cta-offset', `${((1 - ctaReveal) * 12).toFixed(2)}px`);
+    landing.classList.toggle('is-active', state.progress >= 0.94);
+    landing.classList.toggle('is-interactive', ctaReveal > 0.8);
     film.classList.toggle('has-progress', state.progress > 0.012);
   }
 
@@ -153,7 +214,8 @@
 
   function updateProgress() {
     const rect = film.getBoundingClientRect();
-    const scrollDistance = Math.max(1, film.offsetHeight - window.innerHeight);
+    // Reserve the section's final viewport of sticky travel as a stable landing hold.
+    const scrollDistance = Math.max(1, film.offsetHeight - (window.innerHeight * 2));
     state.progress = clamp(-rect.top / scrollDistance, 0, 1);
 
     if (state.manifest) {
@@ -186,7 +248,13 @@
       if (!response.ok) throw new Error('Manifest unavailable');
 
       state.manifest = await response.json();
-      if (!Number.isInteger(state.manifest.count) || state.manifest.count < 1 || !state.manifest.pattern) {
+      if (
+        !Number.isInteger(state.manifest.count)
+        || state.manifest.count < 1
+        || !state.manifest.pattern
+        || !(state.manifest.width > 0)
+        || !(state.manifest.height > 0)
+      ) {
         throw new Error('Invalid manifest');
       }
 
@@ -194,6 +262,9 @@
       const coarse = [0];
       for (let frameNumber = 8; frameNumber <= state.manifest.count; frameNumber += 8) {
         coarse.push(frameNumber - 1);
+      }
+      if (coarse[coarse.length - 1] !== state.manifest.count - 1) {
+        coarse.push(state.manifest.count - 1);
       }
 
       let coarseLoaded = 0;
@@ -204,6 +275,8 @@
         loader.setAttribute('aria-valuenow', String(percent));
         loaderBar.style.transform = `scaleX(${coarseLoaded / coarse.length})`;
       }));
+
+      if (state.loaded.size === 0) throw new Error('Frames unavailable');
 
       loader.classList.add('is-ready');
       window.setTimeout(() => {
@@ -226,6 +299,7 @@
     state.canvasDirty = true;
     updateProgress();
   }, { passive: true });
+  window.addEventListener('pageshow', updateProgress);
 
   initialise();
 })();
