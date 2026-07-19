@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0a0e14" />
+    <link rel="icon" href="../shared/logo-full.png" />
+    <meta
+      name="description"
+      content="Sentinel Creative — 무대 뒤에서 모든 순간을 지켜보는 사람들"
+    />
+    <title>SENTINEL — Always watching.</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="static-hero" id="static-hero">
+      <div class="static-hero__halo" aria-hidden="true"></div>
+      <div class="static-hero__content">
+        <img
+          class="static-hero__logo"
+          src="../shared/logo-full.png"
+          alt="Sentinel Creative"
+        />
+        <p class="eyebrow">SENTINEL CREATIVE</p>
+        <h1>Always<br />watching.</h1>
+        <p class="static-hero__copy">무대 뒤에서 모든 순간을 지켜보는 사람들</p>
+        <a class="cta" href="https://sentinel-korea.com/">
+          <span>Sentinel 만나기</span><span aria-hidden="true">↗</span>
+        </a>
+        <p class="static-hero__note">몰입형 화면을 표시할 수 없어 정적 화면으로 제공합니다.</p>
+      </div>
+    </main>
+
+    <div class="experience" id="experience" aria-hidden="true">
+      <canvas class="webgl" id="webgl"></canvas>
+      <div class="atmosphere" aria-hidden="true"></div>
+
+      <header class="site-header">
+        <a class="wordmark" href="#top" aria-label="Sentinel 처음으로">SENTINEL</a>
+        <p>CREATIVE EXPERIENCE</p>
+      </header>
+
+      <div class="chapter chapter--title" id="title-chapter">
+        <p class="eyebrow">ALWAYS WATCHING</p>
+        <h1>SENTINEL</h1>
+        <p>모든 순간을 지켜봅니다</p>
+      </div>
+
+      <div class="chapter chapter--closing" id="closing-chapter">
+        <p class="eyebrow">SENTINEL CREATIVE</p>
+        <h2>빛나는 순간의<br />가장 가까운 곳에서.</h2>
+        <p class="closing-copy">무대 뒤에서 모든 순간을 지켜보는 사람들</p>
+        <a class="cta" href="https://sentinel-korea.com/">
+          <span>Sentinel 만나기</span><span aria-hidden="true">↗</span>
+        </a>
+      </div>
+
+      <div class="progress" aria-hidden="true">
+        <span class="progress__label">01</span>
+        <span class="progress__rail"><i id="progress-fill"></i></span>
+        <span class="progress__label">03</span>
+      </div>
+
+      <div class="scroll-cue" id="scroll-cue" aria-hidden="true">
+        <span>SCROLL TO ENTER</span>
+        <i></i>
+      </div>
+    </div>
+
+    <div class="scroll-space" id="top" aria-hidden="true"></div>
+    <p class="sr-only" id="experience-status" aria-live="polite"></p>
+
+    <script type="module" src="./scene.js"></script>
+  </body>
+</html>

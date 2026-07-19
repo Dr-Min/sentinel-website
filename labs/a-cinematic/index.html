@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko" class="no-js">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0a0e14">
+    <link rel="icon" href="data:,">
+    <meta
+      name="description"
+      content="무대 뒤에서 모든 순간을 지켜보는 사람들, Sentinel Creative."
+    >
+    <title>Sentinel Creative — Always watching.</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+      document.documentElement.classList.remove('no-js');
+      document.documentElement.classList.add('has-js');
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('reduced-motion');
+      }
+    </script>
+    <script src="film.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <section class="film" aria-label="센티넬 크리에이티브 시네마틱 필름">
+        <div class="film__sticky">
+          <img
+            class="film__poster film__poster--motion"
+            src="../shared/frames/frame_0001.webp"
+            alt=""
+            width="1152"
+            height="648"
+            aria-hidden="true"
+          >
+          <img
+            class="film__poster film__poster--static"
+            src="../shared/frames/frame_0097.webp"
+            alt="황금빛 조리개 너머로 펼쳐진 행사 무대"
+            width="1152"
+            height="648"
+          >
+          <canvas
+            class="film__canvas"
+            aria-label="스크롤에 따라 열리는 황금빛 조리개"
+          ></canvas>
+
+          <div class="film__shade" aria-hidden="true"></div>
+
+          <div class="film__overlays">
+            <div class="film__line" data-start="0.05" data-end="0.25">
+              <span class="film__eyebrow">SENTINEL CREATIVE</span>
+              <p>어둠 속에서도</p>
+            </div>
+            <div class="film__line" data-start="0.30" data-end="0.50">
+              <p>모든 순간을 지켜봅니다</p>
+            </div>
+            <div class="film__line" data-start="0.55" data-end="0.75">
+              <p>무대 위의 빛나는 순간까지</p>
+            </div>
+            <div class="film__line film__line--final" data-start="0.82" data-end="1" data-stay="true">
+              <p>SENTINEL <span aria-hidden="true">—</span><br class="mobile-break"> Always watching.</p>
+            </div>
+          </div>
+
+          <div class="film__static-copy">
+            <span class="film__eyebrow">SENTINEL CREATIVE</span>
+            <p>SENTINEL <span aria-hidden="true">—</span><br class="mobile-break"> Always watching.</p>
+          </div>
+
+          <div class="scroll-cue" aria-hidden="true">
+            <span>SCROLL TO REVEAL</span>
+            <i></i>
+          </div>
+
+          <div class="loader" role="progressbar" aria-label="필름 불러오는 중" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span class="loader__bar"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="closing" aria-labelledby="closing-title">
+        <div class="closing__inner">
+          <img
+            class="closing__logo"
+            src="../shared/logo-full.png"
+            alt="Sentinel Creative"
+          >
+          <div class="closing__rule" aria-hidden="true"></div>
+          <h1 id="closing-title">무대 뒤에서 모든 순간을 지켜보는 사람들</h1>
+          <p>
+            대한민국에서 진행된 대형 런칭과 컨퍼런스에는 언제나<br>
+            Sentinel Creative가 함께했습니다.
+          </p>
+          <a class="closing__cta" href="https://sentinel-korea.com" rel="noreferrer">
+            <span>Sentinel 만나기</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
