@@ -40,36 +40,6 @@ body {
   text-align: center;
 }
 
-#sentinel-eye {
-  position: relative;
-  width: clamp(20rem, 42vw, 30rem);
-  aspect-ratio: 401 / 250;
-  margin-bottom: clamp(1.75rem, 4vh, 2.75rem);
-  perspective: 900px;
-}
-
-#sentinel-eye .hero-logo {
-  display: block;
-  width: 100%;
-  height: 100%;
-  will-change: transform;
-  transform-style: flat;
-}
-
-#sentinel-eye::after {
-  content: "";
-  position: absolute;
-  inset: -85% -70%;
-  pointer-events: none;
-  background: radial-gradient(
-    circle at var(--glow-x, 50%) var(--glow-y, 50%),
-    rgba(232, 200, 74, 0.16),
-    rgba(232, 200, 74, 0) 38%
-  );
-  opacity: var(--glow-o, 0);
-  transition: opacity 0.8s ease;
-}
-
 h1 {
   margin: 0;
   color: var(--ink);
@@ -124,6 +94,48 @@ html {
 
 body {
   overflow-x: hidden;
+}
+
+#watcher {
+  position: fixed;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.48;
+  filter: drop-shadow(0 0 18px rgba(204, 161, 1, 0.35));
+}
+
+#watcher > svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 120px;
+  height: 120px;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+#watcher:is(.is-static, .watcher-static, .static) {
+  opacity: 0.3;
+}
+
+#watcher:is(.is-static, .watcher-static, .static) > svg {
+  top: auto;
+  right: clamp(1.25rem, 4vw, 3rem);
+  bottom: clamp(1.25rem, 4vw, 3rem);
+  left: auto;
+  width: 84px;
+  height: 84px;
+  transform: none !important;
+  will-change: auto;
+}
+
+main > section,
+footer {
+  position: relative;
+  z-index: 2;
 }
 
 a {
@@ -218,10 +230,10 @@ a.nav-brand img.nav-logo {
   min-height: 100vh;
   min-height: 100svh;
   width: 100%;
-  padding: clamp(5rem, 10vh, 8rem) clamp(1.5rem, 5vw, 4rem);
-  align-content: center;
+  padding: max(20rem, 58vh) clamp(1.5rem, 5vw, 4rem) clamp(7rem, 12vh, 9rem);
+  padding-top: max(20rem, 58svh);
+  align-content: start;
   grid-template-areas:
-    "mark"
     "tagline"
     "sub";
   grid-template-columns: minmax(0, 1fr);
@@ -229,13 +241,8 @@ a.nav-brand img.nav-logo {
   text-align: center;
 }
 
-#hero #sentinel-eye {
-  margin: 0;
-  grid-area: mark;
-}
-
 #hero .tagline {
-  margin-top: clamp(1.25rem, 3vh, 2rem);
+  margin-top: 0;
   grid-area: tagline;
   color: #8d897d;
 }
@@ -643,6 +650,14 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  #watcher {
+    opacity: 0.3;
+  }
+
+  #watcher > svg {
+    transition: none;
   }
 
   #top-nav,
