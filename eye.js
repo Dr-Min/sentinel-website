@@ -44,9 +44,11 @@
     return element;
   }
 
-  // Almond eye shape in the 120×120 viewBox, centred on (60, 60).
+  // The original a61975e almond eye path (200×140 space) scaled ×0.6 and shifted
+  // +18 in y so it centres on (60, 60) inside the 120×120 viewBox — exact shape,
+  // only recoloured to the gold palette below.
   const EYE_PATH =
-    "M8 60 C28 26 46 20 60 20 C74 20 92 26 112 60 C92 94 74 100 60 100 C46 100 28 94 8 60 Z";
+    "M6 60 C20.4 30 45 25.2 60 25.2 C75 25.2 99.6 30 114 60 C99.6 90 75 94.8 60 94.8 C45 94.8 20.4 90 6 60 Z";
 
   function buildWatcherSvg() {
     const svg = createSvgElement("svg", {
@@ -60,63 +62,53 @@
     const defs = createSvgElement("defs");
     const clip = createSvgElement("clipPath", { id: "watcher-eye-clip" });
     clip.append(createSvgElement("path", { d: EYE_PATH }));
-    const irisGradient = createSvgElement("radialGradient", {
-      id: "watcher-iris-gradient",
-      cx: "45%",
-      cy: "38%",
-      r: "68%"
-    });
-    [
-      ["0%", "#e8c84a"],
-      ["55%", "#cca101"],
-      ["100%", "#8a6b0a"]
-    ].forEach(([offset, color]) => {
-      irisGradient.append(createSvgElement("stop", { offset, "stop-color": color }));
-    });
-    defs.append(clip, irisGradient);
+    defs.append(clip);
 
     // eyeVisual = the whole eye; it gets the blink (vertical squash).
     const aperture = createSvgElement("g");
     const sclera = createSvgElement("path", {
       d: EYE_PATH,
-      fill: "#f2eede",
-      stroke: "#2a2410",
-      "stroke-width": "4",
+      fill: "#f4f1e8",
+      stroke: "#111820",
+      "stroke-width": "3.6",
       "stroke-linejoin": "round"
     });
 
     const clipped = createSvgElement("g", { "clip-path": "url(#watcher-eye-clip)" });
     // pupil = the gaze group (iris + pupil + highlight); it gets the cursor tracking.
+    // Radii are the original a61975e values (31/23/13/5) scaled ×0.6.
     const pupil = createSvgElement("g");
+    // Colours below are the logo gold (#ffca02, extracted from assets/logo-full.png)
+    // and darker/lighter tints of that exact hue — flat fill, no gradient.
     const iris = createSvgElement("circle", {
       cx: VIEWBOX_CENTER,
       cy: VIEWBOX_CENTER,
-      r: 18,
-      fill: "url(#watcher-iris-gradient)",
-      stroke: "#7a5c08",
+      r: 18.6,
+      fill: "#ffca02",
+      stroke: "#8c6f01",
       "stroke-width": "3"
     });
     const irisRing = createSvgElement("circle", {
       cx: VIEWBOX_CENTER,
       cy: VIEWBOX_CENTER,
-      r: 13,
+      r: 13.8,
       fill: "none",
-      stroke: "#f0d873",
-      "stroke-width": "1.5",
-      opacity: "0.6"
+      stroke: "#ffe78d",
+      "stroke-width": "1.2",
+      opacity: "0.62"
     });
     const pupilCore = createSvgElement("circle", {
       cx: VIEWBOX_CENTER,
       cy: VIEWBOX_CENTER,
-      r: 7.5,
+      r: 7.8,
       fill: "#0a0e14"
     });
     const highlight = createSvgElement("circle", {
-      cx: VIEWBOX_CENTER - 6,
-      cy: VIEWBOX_CENTER - 7,
+      cx: VIEWBOX_CENTER - 4.8,
+      cy: VIEWBOX_CENTER - 6,
       r: 3,
       fill: "#ffffff",
-      opacity: "0.9"
+      opacity: "0.92"
     });
 
     pupil.append(iris, irisRing, pupilCore, highlight);
