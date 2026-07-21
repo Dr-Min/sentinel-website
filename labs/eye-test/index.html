@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SENTINEL — Eye Test</title>
+<style>
+  :root { --bg:#0a0e14; --ink:#f4f1e8; --gold:#ffca02; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  header { padding:2rem clamp(1rem,4vw,3rem) 0.5rem; }
+  header h1 { margin:0; font-size:1.1rem; letter-spacing:.2em; color:var(--gold); font-weight:700; }
+  header p { margin:.6rem 0 0; color:#8e9aaa; font-size:.9rem; line-height:1.6; }
+  .grid { display:grid; gap:14px; padding:1.25rem clamp(1rem,4vw,3rem) 3rem;
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); }
+  .cell { position:relative; aspect-ratio:4/3; border:1px solid #1c2530; border-radius:10px;
+    overflow:hidden; background:radial-gradient(circle at 50% 45%,rgba(255,202,2,.04),transparent 70%),#0b0f16; }
+  .cell .tag { position:absolute; top:10px; left:12px; z-index:3;
+    font-size:1.4rem; font-weight:800; color:var(--gold); letter-spacing:.05em; }
+  .cell .name { position:absolute; bottom:10px; left:12px; right:12px; z-index:3;
+    font-size:.72rem; color:#7a8592; letter-spacing:.03em; }
+  .cell svg { position:absolute; top:0; left:0; will-change:transform; }
+  .cell svg * { transform-box:fill-box; transform-origin:center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SENTINEL · EYE TEST</h1>
+  <p>마우스를 움직이면 모든 눈동자가 커서를 따라봅니다. 각 눈은 자기 칸 안에서만 돌아다니고, 4~7초마다 깜빡입니다.<br>
+     마음에 드는 <strong>알파벳</strong>을 말씀해 주세요. (색은 모두 로고 골드 #ffca02 계열)</p>
+</header>
+<div class="grid" id="grid"></div>
+
+<script>
+"use strict";
+const NS = "http://www.w3.org/2000/svg";
+const GOLD = "#ffca02", GOLD_L = "#ffe06c", GOLD_D = "#c79e02", GOLD_DD = "#a5780a";
+const CREAM = "#f4f1e8", DARKBODY = "#0e131b", PUPIL = "#05070a";
+// original a61975e almond path, scaled x0.6, centred at (60,60) in a 120 box
+const EYE = "M6 60 C20.4 30 45 25.2 60 25.2 C75 25.2 99.6 30 114 60 C99.6 90 75 94.8 60 94.8 C45 94.8 20.4 90 6 60 Z";
+
+function el(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+function grp(children) {
+  const g = el("g", {});
+  children.forEach(c => g.append(c));
+  return g;
+}
+// each builder returns { eyeVisual (blinks), gaze (tracks cursor) }
+const VARIANTS = [
+  { tag:"A", name:"현재 — 다크 눈알 · 조리개 홍채", build: () => {
+      const sclera = el("path",{d:EYE,fill:DARKBODY,stroke:GOLD_D,"stroke-width":1.6,"stroke-linejoin":"round"});
+      const gaze = grp([
+        el("circle",{cx:60,cy:60,r:18.6,fill:"none",stroke:GOLD,"stroke-width":1.9}),
+        el("circle",{cx:60,cy:60,r:12.6,fill:"none",stroke:GOLD_L,"stroke-width":1.2,opacity:.75}),
+        el("circle",{cx:60,cy:60,r:6,fill:PUPIL}),
+        el("circle",{cx:60,cy:60,r:2.7,fill:GOLD}),
+        el("circle",{cx:55.8,cy:55.2,r:1.5,fill:"#fff3cf",opacity:.9}),
+      ]);
+      return { sclera, gaze };
+    }},
+  { tag:"B", name:"과거 — 크림 흰자 · 채운 골드 홍채", build: () => {
+      const sclera = el("path",{d:EYE,fill:CREAM,stroke:"#111820","stroke-width":3.6,"stroke-linejoin":"round"});
+      const gaze = grp([
+        el("circle",{cx:60,cy:60,r:18.6,fill:GOLD,stroke:"#8c6f01","stroke-width":3}),
+        el("circle",{cx:60,cy:60,r:13.8,fill:"none",stroke:"#ffe78d","stroke-width":1.2,opacity:.62}),
+        el("circle",{cx:60,cy:60,r:7.8,fill:"#0a0e14"}),
+        el("circle",{cx:55.2,cy:54,r:3,fill:"#fff",opacity:.92}),
+      ]);
+      return { sclera, gaze };
+    }},
+  { tag:"C", name:"현재 홍채 + 크림 흰자", build: () => {
+      const sclera = el("path",{d:EYE,fill:CREAM,stroke:GOLD_D,"stroke-width":2,"stroke-linejoin":"round"});
+      const gaze = grp([
+        el("circle",{cx:60,cy:60,r:18.6,fill:"none",stroke:GOLD_DD,"stroke-width":2}),
+        el("circle",{cx:60,cy:60,r:12.6,fill:"none",stroke:GOLD_D,"stroke-width":1.2,opacity:.8}),
+        el("circle",{cx:60,cy:60,r:6,fill:"#0a0e14"}),
+        el("circle",{cx:60,cy:60,r:2.7,fill:GOLD_DD}),
+      ]);
+      return { sclera, gaze };
+    }},
+  { tag:"D", name:"과거 테두리만 — 라인아트", build: () => {
+      const sclera = el("path",{d:EYE,fill:"none",stroke:GOLD,"stroke-width":2,"stroke-linejoin":"round"});
+      const gaze = grp([
+        el("circle",{cx:60,cy:60,r:18.6,fill:"none",stroke:GOLD,"stroke-width":2}),
+        el("circle",{cx:60,cy:60,r:12,fill:"none",stroke:GOLD_L,"stroke-width":1.2,opacity:.7}),
+        el("circle",{cx:60,cy:60,r:5,fill:GOLD}),
+      ]);
+      return { sclera, gaze };
+    }},
+  { tag:"E", name:"미니멀 — 눈매 선 + 골드 동공", build: () => {
+      const sclera = el("path",{d:EYE,fill:"none",stroke:GOLD,"stroke-width":2,"stroke-linejoin":"round"});
+      const gaze = grp([
+        el("circle",{cx:60,cy:60,r:13,fill:"none",stroke:GOLD,"stroke-width":1,opacity:.5}),
+        el("circle",{cx:60,cy:60,r:7,fill:GOLD}),
+        el("circle",{cx:56,cy:56,r:2,fill:"#fff3cf",opacity:.85}),
+      ]);
+      return { sclera, gaze };
+    }},
+  { tag:"F", name:"다크 눈알 + 채운 골드 홍채", build: () => {
+      const sclera = el("path",{d:EYE,fill:DARKBODY,stroke:GOLD_D,"stroke-width":1.6,"stroke-linejoin":"round"});
+      const gaze = grp([
+        el("circle",{cx:60,cy:60,r:18,fill:GOLD}),
+        el("circle",{cx:60,cy:60,r:7.5,fill:PUPIL}),
+        el("circle",{cx:55,cy:54,r:2.6,fill:"#fff3cf",opacity:.85}),
+      ]);
+      return { sclera, gaze };
+    }},
+  { tag:"G", name:"골드 눈 전체 · 다크 동공", build: () => {
+      const sclera = el("path",{d:EYE,fill:GOLD,stroke:"#8c6f01","stroke-width":1.4,"stroke-linejoin":"round"});
+      const gaze = grp([
+        el("circle",{cx:60,cy:60,r:16,fill:"none",stroke:"#0a0e14","stroke-width":1.4,opacity:.55}),
+        el("circle",{cx:60,cy:60,r:9,fill:"#0a0e14"}),
+        el("circle",{cx:56,cy:56,r:2.4,fill:GOLD_L,opacity:.9}),
+      ]);
+      return { sclera, gaze };
+    }},
+  { tag:"H", name:"윗눈꺼풀 강조 · 조리개 홍채", build: () => {
+      const sclera = el("path",{d:EYE,fill:DARKBODY,stroke:GOLD_D,"stroke-width":1.4,"stroke-linejoin":"round"});
+      const lid = el("path",{d:"M8 58 C28 27 46 21 60 21 C74 21 92 27 112 58",fill:"none",stroke:GOLD,"stroke-width":3,"stroke-linecap":"round"});
+      const gaze = grp([
+        el("circle",{cx:60,cy:60,r:17,fill:"none",stroke:GOLD,"stroke-width":1.8}),
+        el("circle",{cx:60,cy:60,r:11,fill:"none",stroke:GOLD_L,"stroke-width":1.1,opacity:.7}),
+        el("circle",{cx:60,cy:60,r:5.5,fill:PUPIL}),
+        el("circle",{cx:60,cy:60,r:2.4,fill:GOLD}),
+      ]);
+      return { sclera, gaze, lid };
+    }},
+];
+
+const cursor = { x: innerWidth/2, y: innerHeight/2 };
+addEventListener("pointermove", e => { cursor.x = e.clientX; cursor.y = e.clientY; }, { passive:true });
+
+const eyes = [];
+const grid = document.getElementById("grid");
+let clipSeq = 0;
+
+VARIANTS.forEach(v => {
+  const cell = document.createElement("div");
+  cell.className = "cell";
+  cell.innerHTML = `<span class="tag">${v.tag}</span><span class="name">${v.tag}. ${v.name}</span>`;
+  grid.append(cell);
+
+  const svg = el("svg", { viewBox:"0 0 120 120", width:120, height:120 });
+  const clipId = "clip" + (clipSeq++);
+  const defs = el("defs", {});
+  const clip = el("clipPath", { id: clipId });
+  clip.append(el("path", { d: EYE }));
+  defs.append(clip);
+
+  const parts = v.build();
+  const clipped = el("g", { "clip-path": `url(#${clipId})` });
+  clipped.append(parts.gaze);
+  const eyeVisual = grp([parts.sclera, clipped]);
+  if (parts.lid) eyeVisual.append(parts.lid);
+  svg.append(defs, eyeVisual);
+  cell.append(svg);
+
+  eyes.push({
+    cell, svg, eyeVisual, gaze: parts.gaze,
+    pose: { x: 0, y: 0 },
+    vel: { x: 0, y: 0 },
+    target: { x: 0, y: 0 },
+    legEnd: 0,
+    pupil: { x: 0, y: 0 },
+    nextBlink: performance.now() + rand(4000, 7000),
+    blinkStart: 0,
+    size: 0,
+  });
+});
+
+function rand(a, b) { return a + Math.random() * (b - a); }
+function clamp(v, a, b) { return Math.max(a, Math.min(v, b)); }
+
+function bounds(e) {
+  const r = e.cell.getBoundingClientRect();
+  const size = Math.min(r.width * 0.5, r.height * 0.66);
+  const halfW = size * 0.45, halfH = size * 0.30;
+  return {
+    r, size,
+    minX: halfW + 10, maxX: r.width - halfW - 10,
+    minY: halfH + 26, maxY: r.height - halfH - 26,
+  };
+}
+function pick(e, b, now) {
+  e.target.x = rand(b.minX, b.maxX);
+  e.target.y = rand(b.minY, b.maxY);
+  e.legEnd = now + rand(2600, 5200);
+}
+
+// init positions once layout is ready
+requestAnimationFrame(() => {
+  eyes.forEach(e => {
+    const b = bounds(e);
+    e.pose.x = (b.minX + b.maxX) / 2;
+    e.pose.y = (b.minY + b.maxY) / 2;
+    pick(e, b, performance.now());
+  });
+  requestAnimationFrame(loop);
+});
+
+let prev = performance.now();
+function loop(now) {
+  const dt = Math.min((now - prev) / 1000, 0.05);
+  const df = Math.min((now - prev) / 16.67, 4);
+  prev = now;
+
+  for (const e of eyes) {
+    const b = bounds(e);
+    e.size = b.size;
+
+    // wander within cell (critically damped)
+    if (now >= e.legEnd) pick(e, b, now);
+    const omega = 2 / 1.3;
+    e.vel.x += (omega*omega*(e.target.x - e.pose.x) - 2*omega*e.vel.x) * dt;
+    e.vel.y += (omega*omega*(e.target.y - e.pose.y) - 2*omega*e.vel.y) * dt;
+    e.pose.x = clamp(e.pose.x + e.vel.x * dt, b.minX, b.maxX);
+    e.pose.y = clamp(e.pose.y + e.vel.y * dt, b.minY, b.maxY);
+
+    // gaze toward global cursor (converted to cell-local)
+    const eyeCX = b.r.left + e.pose.x, eyeCY = b.r.top + e.pose.y;
+    const gx = cursor.x - eyeCX, gy = cursor.y - eyeCY;
+    const dist = Math.hypot(gx, gy);
+    const strength = Math.min(dist / 240, 1) * 12;
+    const tx = dist ? gx / dist * strength : 0;
+    const ty = dist ? gy / dist * strength : 0;
+    const ez = 1 - Math.pow(0.86, df);
+    e.pupil.x += (tx - e.pupil.x) * ez;
+    e.pupil.y += (ty - e.pupil.y) * ez;
+    e.gaze.style.transform = `translate(${e.pupil.x.toFixed(2)}px, ${e.pupil.y.toFixed(2)}px)`;
+
+    // blink (vertical squash)
+    if (!e.blinkStart && now >= e.nextBlink) e.blinkStart = now;
+    if (e.blinkStart) {
+      const p = clamp((now - e.blinkStart) / 200, 0, 1);
+      const sy = 1 - Math.sin(Math.PI * p) * 0.9;
+      e.eyeVisual.style.transform = `scaleY(${sy.toFixed(3)})`;
+      if (p >= 1) { e.blinkStart = 0; e.nextBlink = now + rand(4000, 7000); e.eyeVisual.style.transform = "scaleY(1)"; }
+    }
+
+    // place svg (120-box scaled to size, centred at pose)
+    const s = e.size / 120;
+    e.svg.style.transform = `translate(${(e.pose.x - 60).toFixed(2)}px, ${(e.pose.y - 60).toFixed(2)}px) scale(${s.toFixed(4)})`;
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
