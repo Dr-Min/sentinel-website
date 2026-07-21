@@ -44,6 +44,10 @@
     return element;
   }
 
+  // Almond eye shape in the 120×120 viewBox, centred on (60, 60).
+  const EYE_PATH =
+    "M8 60 C28 26 46 20 60 20 C74 20 92 26 112 60 C92 94 74 100 60 100 C46 100 28 94 8 60 Z";
+
   function buildWatcherSvg() {
     const svg = createSvgElement("svg", {
       viewBox: `0 0 ${VIEWBOX_SIZE} ${VIEWBOX_SIZE}`,
@@ -52,99 +56,78 @@
       focusable: "false",
       "aria-hidden": "true"
     });
+
     const defs = createSvgElement("defs");
-    const ringGradient = createSvgElement("linearGradient", {
-      id: "watcher-ring-gradient",
-      x1: "0",
-      y1: "0",
-      x2: "0",
-      y2: "1"
-    });
-    const pupilGradient = createSvgElement("radialGradient", {
-      id: "watcher-pupil-gradient",
-      cx: "38%",
-      cy: "32%",
+    const clip = createSvgElement("clipPath", { id: "watcher-eye-clip" });
+    clip.append(createSvgElement("path", { d: EYE_PATH }));
+    const irisGradient = createSvgElement("radialGradient", {
+      id: "watcher-iris-gradient",
+      cx: "45%",
+      cy: "38%",
       r: "68%"
     });
-    const haloFilter = createSvgElement("filter", {
-      id: "watcher-pupil-halo",
-      x: "-100%",
-      y: "-100%",
-      width: "300%",
-      height: "300%"
-    });
-    const blur = createSvgElement("feGaussianBlur", {
-      stdDeviation: "2.4"
-    });
-
     [
       ["0%", "#e8c84a"],
-      ["52%", "#cca101"],
-      ["100%", "#7a6512"]
+      ["55%", "#cca101"],
+      ["100%", "#8a6b0a"]
     ].forEach(([offset, color]) => {
-      ringGradient.append(createSvgElement("stop", {
-        offset,
-        "stop-color": color
-      }));
+      irisGradient.append(createSvgElement("stop", { offset, "stop-color": color }));
     });
+    defs.append(clip, irisGradient);
 
-    [
-      ["0%", "#ffe9a8"],
-      ["100%", "#cca101"]
-    ].forEach(([offset, color]) => {
-      pupilGradient.append(createSvgElement("stop", {
-        offset,
-        "stop-color": color
-      }));
-    });
-
-    haloFilter.append(blur);
-    defs.append(ringGradient, pupilGradient, haloFilter);
-
+    // eyeVisual = the whole eye; it gets the blink (vertical squash).
     const aperture = createSvgElement("g");
-    const ringDefinitions = [
-      { radius: 48, strokeWidth: 5, rotation: -8 },
-      { radius: 34, strokeWidth: 7, rotation: 13 },
-      { radius: 20, strokeWidth: 3.5, rotation: -19 }
-    ];
-    const rings = ringDefinitions.map(({ radius, strokeWidth, rotation }) => {
-      const group = createSvgElement("g");
-      const ring = createSvgElement("circle", {
-        cx: VIEWBOX_CENTER,
-        cy: VIEWBOX_CENTER,
-        r: radius,
-        fill: "none",
-        stroke: "url(#watcher-ring-gradient)",
-        "stroke-width": strokeWidth,
-        "stroke-linecap": "round"
-      });
-
-      group.dataset.baseRotation = String(rotation * Math.PI / 180);
-      group.append(ring);
-      aperture.append(group);
-      return group;
+    const sclera = createSvgElement("path", {
+      d: EYE_PATH,
+      fill: "#f2eede",
+      stroke: "#2a2410",
+      "stroke-width": "4",
+      "stroke-linejoin": "round"
     });
 
+    const clipped = createSvgElement("g", { "clip-path": "url(#watcher-eye-clip)" });
+    // pupil = the gaze group (iris + pupil + highlight); it gets the cursor tracking.
     const pupil = createSvgElement("g");
-    const halo = createSvgElement("circle", {
+    const iris = createSvgElement("circle", {
       cx: VIEWBOX_CENTER,
       cy: VIEWBOX_CENTER,
-      r: 9.5,
-      fill: "#cca101",
-      opacity: "0.38",
-      filter: "url(#watcher-pupil-halo)"
+      r: 18,
+      fill: "url(#watcher-iris-gradient)",
+      stroke: "#7a5c08",
+      "stroke-width": "3"
     });
-    const orb = createSvgElement("circle", {
+    const irisRing = createSvgElement("circle", {
       cx: VIEWBOX_CENTER,
       cy: VIEWBOX_CENTER,
-      r: 7,
-      fill: "url(#watcher-pupil-gradient)"
+      r: 13,
+      fill: "none",
+      stroke: "#f0d873",
+      "stroke-width": "1.5",
+      opacity: "0.6"
+    });
+    const pupilCore = createSvgElement("circle", {
+      cx: VIEWBOX_CENTER,
+      cy: VIEWBOX_CENTER,
+      r: 7.5,
+      fill: "#0a0e14"
+    });
+    const highlight = createSvgElement("circle", {
+      cx: VIEWBOX_CENTER - 6,
+      cy: VIEWBOX_CENTER - 7,
+      r: 3,
+      fill: "#ffffff",
+      opacity: "0.9"
     });
 
-    pupil.append(halo, orb);
-    svg.append(defs, aperture, pupil);
+    pupil.append(iris, irisRing, pupilCore, highlight);
+    clipped.append(pupil);
+    aperture.append(sclera, clipped);
+    svg.append(defs, aperture);
 
-    [svg, aperture, pupil, ...rings].forEach((element) => {
+    // rings kept as an empty list so the shared animation loop is a no-op for them.
+    const rings = [];
+
+    [svg, aperture, pupil].forEach((element) => {
       element.style.transformBox = "fill-box";
       element.style.transformOrigin = "center";
       element.style.willChange = "transform";
@@ -462,27 +445,20 @@
     }
 
     function updateRings(now) {
-      const seconds = now / 1000;
-      const rotationSpeeds = [0.012, -0.018, 0.015];
-
-      scene.rings.forEach((ring, index) => {
-        const baseRotation = Number(ring.dataset.baseRotation);
-        ring.style.transform = `rotate(${baseRotation + seconds * rotationSpeeds[index]}rad)`;
-      });
-
+      // The eye blinks by squashing vertically, like an eyelid closing.
       if (!blinkStartTime && now >= nextBlinkTime) {
         blinkStartTime = now;
       }
 
       if (blinkStartTime) {
-        const progress = clamp((now - blinkStartTime) / 260, 0, 1);
-        const scale = 1 - Math.sin(Math.PI * progress) * 0.14;
-        scene.aperture.style.transform = `scale(${scale.toFixed(4)})`;
+        const progress = clamp((now - blinkStartTime) / 200, 0, 1);
+        const scaleY = 1 - Math.sin(Math.PI * progress) * 0.9;
+        scene.aperture.style.transform = `scaleY(${scaleY.toFixed(4)})`;
 
         if (progress >= 1) {
           blinkStartTime = 0;
-          nextBlinkTime = now + randomBetween(5000, 9000);
-          scene.aperture.style.transform = "scale(1)";
+          nextBlinkTime = now + randomBetween(4000, 7000);
+          scene.aperture.style.transform = "scaleY(1)";
         }
       }
     }
