@@ -102,8 +102,16 @@ body {
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  opacity: 0.48;
-  filter: drop-shadow(0 0 18px rgba(204, 161, 1, 0.35));
+  opacity: 1;
+  filter: drop-shadow(0 0 7px rgba(255, 202, 2, 0.22));
+  transition: opacity 0.55s ease;
+}
+
+/* Crisp and full in the hero; dimmed only while roaming behind the content. */
+#watcher[data-state="wander"],
+#watcher[data-state="approach"],
+#watcher[data-state="flinch"] {
+  opacity: 0.42;
 }
 
 #watcher > svg {

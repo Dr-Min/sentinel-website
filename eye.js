@@ -66,52 +66,60 @@
 
     // eyeVisual = the whole eye; it gets the blink (vertical squash).
     const aperture = createSvgElement("g");
+    // Dark eyeball body so the eye sits inside the gold-on-black world instead of
+    // reading as a pale cutout. Thin gold eyelid outline (logo line-art language).
     const sclera = createSvgElement("path", {
       d: EYE_PATH,
-      fill: "#f4f1e8",
-      stroke: "#111820",
-      "stroke-width": "3.6",
+      fill: "#0e131b",
+      stroke: "#c79e02",
+      "stroke-width": "1.6",
       "stroke-linejoin": "round"
     });
 
     const clipped = createSvgElement("g", { "clip-path": "url(#watcher-eye-clip)" });
-    // pupil = the gaze group (iris + pupil + highlight); it gets the cursor tracking.
-    // Radii are the original a61975e values (31/23/13/5) scaled ×0.6.
+    // pupil = the gaze group; it gets the cursor tracking. The iris is the logo's
+    // concentric-ring aperture, not a solid disc. Colours are the extracted logo
+    // gold #ffca02 and lighter/darker tints of that same hue; radii are the
+    // original a61975e values scaled ×0.6.
     const pupil = createSvgElement("g");
-    // Colours below are the logo gold (#ffca02, extracted from assets/logo-full.png)
-    // and darker/lighter tints of that exact hue — flat fill, no gradient.
-    const iris = createSvgElement("circle", {
+    const irisOuter = createSvgElement("circle", {
       cx: VIEWBOX_CENTER,
       cy: VIEWBOX_CENTER,
       r: 18.6,
-      fill: "#ffca02",
-      stroke: "#8c6f01",
-      "stroke-width": "3"
+      fill: "none",
+      stroke: "#ffca02",
+      "stroke-width": "1.9"
     });
-    const irisRing = createSvgElement("circle", {
+    const irisInner = createSvgElement("circle", {
       cx: VIEWBOX_CENTER,
       cy: VIEWBOX_CENTER,
-      r: 13.8,
+      r: 12.6,
       fill: "none",
-      stroke: "#ffe78d",
+      stroke: "#ffe06c",
       "stroke-width": "1.2",
-      opacity: "0.62"
+      opacity: "0.75"
     });
     const pupilCore = createSvgElement("circle", {
       cx: VIEWBOX_CENTER,
       cy: VIEWBOX_CENTER,
-      r: 7.8,
-      fill: "#0a0e14"
+      r: 6,
+      fill: "#05070a"
+    });
+    const pupilDot = createSvgElement("circle", {
+      cx: VIEWBOX_CENTER,
+      cy: VIEWBOX_CENTER,
+      r: 2.7,
+      fill: "#ffca02"
     });
     const highlight = createSvgElement("circle", {
-      cx: VIEWBOX_CENTER - 4.8,
-      cy: VIEWBOX_CENTER - 6,
-      r: 3,
-      fill: "#ffffff",
-      opacity: "0.92"
+      cx: VIEWBOX_CENTER - 4.2,
+      cy: VIEWBOX_CENTER - 4.8,
+      r: 1.5,
+      fill: "#fff3cf",
+      opacity: "0.9"
     });
 
-    pupil.append(iris, irisRing, pupilCore, highlight);
+    pupil.append(irisOuter, irisInner, pupilCore, pupilDot, highlight);
     clipped.append(pupil);
     aperture.append(sclera, clipped);
     svg.append(defs, aperture);
@@ -141,7 +149,7 @@
     const scene = buildWatcherSvg();
     const pose = {
       x: window.innerWidth / 2,
-      y: window.innerHeight * 0.36,
+      y: window.innerHeight * 0.32,
       size: clamp(window.innerWidth * 0.3, 230, 380)
     };
     const pupilCurrent = { x: 0, y: 0 };
@@ -196,7 +204,7 @@
     function heroPosition(now) {
       return {
         x: window.innerWidth / 2,
-        y: window.innerHeight * 0.36 + Math.sin(now / 1550) * 6
+        y: window.innerHeight * 0.32 + Math.sin(now / 1550) * 6
       };
     }
 
